@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    app:startDestination="@id/runFragment">
+
+    <fragment
+        android:id="@+id/runFragment"
+        android:name="com.helow.runner4.run.ui.RunFragment"
+        android:label="@string/new_run"
+        tools:layout="@layout/fragment_run" />
+    <fragment
+        android:id="@+id/listFragment"
+        android:name="com.helow.runner4.run.ui.list.ListFragment"
+        android:label="@string/run_list"
+        tools:layout="@layout/fragment_list" >
+        <action
+            android:id="@+id/action_listFragment_to_detailFragment"
+            app:destination="@id/detailFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/detailFragment"
+        android:name="com.helow.runner4.run.ui.DetailFragment"
+        android:label="@string/run_detail"
+        tools:layout="@layout/fragment_detail" >
+        <argument
+            android:name="run_id"
+            app:argType="string" />
+    </fragment>
+</navigation>

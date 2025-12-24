@@ -1,0 +1,101 @@
+@startuml
+skinparam componentStyle uml2
+skinparam shadowing false
+skinparam linetype ortho
+skinparam wrapWidth 220
+skinparam maxMessageSize 220
+
+actor "Runner4\nApp" as App
+
+cloud "Internet" as Net
+cloud "Cloud L4 Network\nLoad Balancer (NLB)" as NLB
+cloud "Internet" as Net
+
+' ===== External managed state =====
+database "PostgreSQL HA Cluster\n(Primary + Replica)\nExternal/Managed" as PG
+cloud "Managed S3\n(Object Storage)" as S3
+
+' ===== External SaaS left as-is =====
+cloud "Push delivery\nFCM" as FCM
+cloud "AppMetrica\n(Analytics + Crashes)" as AM
+
+' ===== External Maps Platform =====
+cloud "Yandex MapKit\nTiles + API" as Maps
+
+' ===== Kubernetes =====
+node "Kubernetes Cluster\n(2+ nodes)" as K8S {
+
+  node "Node A" as NA {
+    component "Ingress Controller\n(pod)" as IngressA
+    component "Kong API Gateway\n(pod)" as KongA
+
+    component "Auth (GoTrue)\n(pod)" as AuthA
+    component "REST API (PostgREST)\n(pod)" as RestA
+    component "Storage API\n(pod)" as StorageA
+    component "DB Pooler\n(Supavisor/PgBouncer)\n(pod)" as PoolA
+  }
+
+  node "Node B" as NB {
+    component "Ingress Controller\n(pod)" as IngressB
+    component "Kong API Gateway\n(pod)" as KongB
+
+    component "Auth (GoTrue)\n(pod)" as AuthB
+    component "REST API (PostgREST)\n(pod)" as RestB
+    component "Storage API\n(pod)" as StorageB
+    component "DB Pooler\n(Supavisor/PgBouncer)\n(pod)" as PoolB
+  }
+
+  note right of K8S
+  Реплики распределяются равномерно:
+  - topologySpreadConstraints / podAntiAffinity
+  - по 1 pod каждого сервиса на ноду (минимум при 2 нодах)
+  end note
+}
+
+' ===== Traffic entry to Supabase =====
+App -down-> Net
+Net -down-> NLB : HTTPS (TCP 443)
+NLB -down-> IngressA : L4 balanced\n(TCP 443)
+NLB -down-> IngressB : L4 balanced\n(TCP 443)
+
+' ===== In-cluster routing (важные связи) =====
+IngressA -down-> KongA : HTTP(S) via Service
+IngressB -down-> KongB : HTTP(S) via Service
+
+KongA -right-> AuthA : /auth/v1
+KongA -right-> RestA : /rest/v1
+KongA -right-> StorageA : /storage/v1
+
+KongB -right-> AuthB : /auth/v1
+KongB -right-> RestB : /rest/v1
+KongB -right-> StorageB : /storage/v1
+
+' ===== DB access (через пулер) =====
+AuthA -down-> PoolA
+RestA -down-> PoolA
+StorageA -down-> PoolA
+
+AuthB -down-> PoolB
+RestB -down-> PoolB
+StorageB -down-> PoolB
+
+PoolA -down-> PG : SQL (TCP)
+PoolB -down-> PG : SQL (TCP)
+
+' ===== Object storage =====
+StorageA -right-> S3 : HTTPS (S3 API)
+StorageB -right-> S3 : HTTPS (S3 API)
+
+' ===== External telemetry and push =====
+App -right-> AM : Reports
+FCM -right-> App : "Notifications"
+
+' ===== Maps traffic =====
+App -right-> Maps : Map data
+
+note bottom of NLB
+NLB только доставляет TCP до ingress controller.
+TLS termination на ingress.
+end note
+
+@enduml

@@ -1,0 +1,76 @@
+@startuml
+skinparam componentStyle uml2
+
+package "UI Layer (Presentation)" {
+    component MainActivity
+    component AuthActivity
+    
+    package "Fragments" {
+        [RunFragment]
+        [ListFragment]
+        [DetailFragment]
+        [LoginFragment]
+        [RegisterFragment]
+    }
+}
+
+package "Service Layer" {
+    [RunService] <<Foreground Service>>
+}
+
+package "Domain Layer" {
+    [Run] <<Data Model>>
+    [Feedback] <<Data Model>>
+    [RunUtils] <<Utility>>
+}
+
+package "Data Layer (Firebase)" {
+    database "Firestore" as DB
+    database "Firebase Auth" as Auth
+}
+
+package "Infrastructure / SDK" {
+    [Google Maps SDK]
+    [Play Services Location]
+    [Android Notification System]
+}
+
+' Interactions
+MainActivity -down-> [RunFragment] : Navigation
+MainActivity -down-> [ListFragment] : Navigation
+MainActivity -down-> [DetailFragment] : Navigation
+MainActivity -left-> AuthActivity : "Starts if no user"
+
+AuthActivity -down-> [LoginFragment] : Navigation
+AuthActivity -down-> [RegisterFragment] : Navigation
+
+[LoginFragment] -down-> Auth : "Sign In"
+[RegisterFragment] -down-> Auth : "Sign Up"
+
+[RunFragment] ..> [RunService] : "Binds / Observes LiveData"
+[RunFragment] -right-> [Google Maps SDK] : "Draw Polyline"
+[RunFragment] -right-> [Play Services Location] : "Get Last Location"
+[RunFragment] ..> [Feedback] : "Creates"
+[RunFragment] -down-> DB : "Save Feedback"
+
+[RunService] -right-> [Play Services Location] : "Get Updates"
+[RunService] -up-> [Google Maps SDK] : "SphericalUtil"
+[RunService] -up-> [Android Notification System] : "Show Status"
+[RunService] ..> [Run] : "Creates"
+[RunService] -down-> DB : "Save Run"
+
+[ListFragment] -down-> DB : "Fetch/Delete/Update Runs"
+[ListFragment] -right-> [DetailFragment] : "Navigation"
+[ListFragment] ..> [Run] : "Displays"
+
+[DetailFragment] -down-> DB : "Fetch Run details"
+[DetailFragment] -right-> [Google Maps SDK] : "Draw Polyline"
+[DetailFragment] ..> [Run] : "Displays"
+
+[RunUtils] <.. [RunService] : "Calculates Distance/Speed"
+[RunUtils] <.. [RunFragment] : "Format UI"
+[RunUtils] <.. [DetailFragment] : "Format UI"
+
+MainActivity -down-> Auth : "Check Session"
+
+@enduml

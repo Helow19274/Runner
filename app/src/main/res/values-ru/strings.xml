@@ -1,0 +1,53 @@
+<resources>
+    <string name="register">Создать аккаунт</string>
+    <string name="already_registered">Уже зарегистрирован</string>
+    <string name="login">Войти</string>
+    <string name="start">Старт</string>
+    <string name="logout">Выйти</string>
+    <string name="run">Забег</string>
+    <string name="run_list">Список забегов</string>
+
+    <string name="distance">Дистанция: %1$.2f м</string>
+    <string name="avg_speed">Ср. скорость: %1$.1f км/ч</string>
+    <string name="begin">Начало: %1$s</string>
+    <string name="end">Конец: %1$s</string>
+    <string name="duration">Продолжительность: %1$s</string>
+    <string name="timer">%1$d:%2$s:%3$s</string>
+    <string name="notifications_denied">Доступ к уведомлениям запрещен</string>
+    <string name="permission_required">Нужно разрешение. Откройте настройки и разрешите приложению %1$s.</string>
+    <string name="to_settings">В настройки</string>
+    <string name="location_denied">Доступ к местоположению запрещен</string>
+    <string name="current_run">Текущий забег</string>
+    <string name="send_notifications">отправлять уведомления</string>
+    <string name="fine_location_access">доступ к точному местоположению</string>
+    <string name="run_name">Новое название</string>
+    <string name="password">Пароль</string>
+
+    <string name="field_not_filled">Поле не заполнено</string>
+    <string name="no_internet_connection">Нет подключения к интернету</string>
+    <string name="invalid_email">Это не e-mail</string>
+    <string name="user_not_found">Нет такого пользователя</string>
+    <string name="wrong_password">Неверный пароль</string>
+    <string name="email_already_in_use">E-mail занят</string>
+    <string name="weak_password">Слишком простой пароль</string>
+    <string name="settings_problem">Проблема настроек</string>
+    <string name="location_unavailable">Местоположение недоступно</string>
+    <string name="finish">Финиш</string>
+    <string name="no_points_available">В маршруте нет точек</string>
+    <string name="rename_title">Переименовать \"%1$s\"?</string>
+    <string name="save">Сохранить</string>
+    <string name="cancel">Отмена</string>
+    <string name="name_not_set">Название не задано</string>
+    <string name="hours_unit"> ч </string>
+    <string name="minutes_unit"> мин </string>
+    <string name="seconds_unit"> с</string>
+    <string name="new_run">Новый забег</string>
+    <string name="run_detail">Просмотр забега</string>
+    <string name="registration">Регистрация</string>
+    <string name="log_in">Вход</string>
+    <string name="date">Дата</string>
+    <string name="follow">Следовать</string>
+    <string name="send">Отправить</string>
+    <string name="send_feedback">Оставьте отзыв</string>
+    <string name="comment">Комментарий (необязательно)</string>
+</resources>

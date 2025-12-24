@@ -1,0 +1,69 @@
+@startuml
+skinparam componentStyle uml2
+skinparam wrapWidth 220
+skinparam maxMessageSize 220
+
+actor "User" as U
+
+node "Android Device" as Device {
+  component "Runner4 App\n(MainActivity/AuthActivity + Fragments)" as App
+  component "RunService\n(Foreground Service)" as Service
+  component "Firebase SDK\n(Auth + Firestore + Analytics + Crashlytics)" as FirebaseSDK
+  component "Google Maps SDK\n(Map renderer + tile client)" as MapsSDK
+
+  App --> FirebaseSDK : calls (Auth/Firestore/Analytics)\nlocal SDK API
+  Service --> FirebaseSDK : calls (Firestore/Analytics/Crashlytics)\nlocal SDK API
+  App --> MapsSDK : map UI, polyline rendering
+  Service --> MapsSDK : SphericalUtil (local)\n(no network)
+}
+
+cloud "Internet (TLS/HTTPS)" as Net
+
+package "Firebase (Google Cloud)" as FirebaseCloud {
+  database "Firebase Auth" as Auth
+  database "Cloud Firestore" as FS
+  component "Firebase Analytics" as Analytics
+  component "Firebase Crashlytics" as Crashlytics
+}
+
+package "Google Maps Platform" as MapsCloud {
+  component "Maps Tiles/Styles API\n(map tiles, fonts, styles)" as Tiles
+  component "Maps Backend Services\n(e.g. telemetry, quotas)" as MapsBackend
+}
+
+U --> App : login / start run /\nview history / send feedback
+
+' --- Network edges (what actually goes over the wire) ---
+FirebaseSDK -[#blue]-> Net
+MapsSDK -[#blue]-> Net
+
+Net -[#blue]-> Auth : Sign-in / Sign-up\nID token + refresh token\n(HTTPS/TLS)
+Net -[#blue]-> FS : Read/Write/Listen documents\n(HTTPS/TLS)
+Net -[#blue]-> Analytics : Log events + set userId\n(HTTPS/TLS)
+Net -[#blue]-> Crashlytics : Crash reports + non-fatal logs\n(HTTPS/TLS)
+
+Net -[#blue]-> Tiles : Map tiles/styles requests\n(HTTPS/TLS)
+Net -[#blue]-> MapsBackend : Maps service calls\n(quotas/telemetry)\n(HTTPS/TLS)
+
+note right of FS
+Firestore collections:
+- users/{uid}/runs/{runId}
+- users/{uid}/feedback/{feedbackId}
+
+Режимы:
+- one-shot fetch (get)
+- realtime listeners (listen)
+- offline cache + later sync
+end note
+
+note left of Auth
+Auth выдаёт:
+- ID Token (JWT) для доступа к Firestore
+- Refresh Token для обновления сессии
+
+SDK автоматически:
+- добавляет токены к запросам Firestore
+- обновляет токен при истечении
+end note
+
+@enduml
