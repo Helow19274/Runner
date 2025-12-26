@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ru" style="height: 100%; margin: 0">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Runner</title>
+
+    <link rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.1.2/firebase-ui-auth.css"/>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+</head>
+<body style="height: 100%; margin: 0">
+<div id="firebaseui-auth-container"></div>
+<div id="map" style="position: fixed; height: 100%; width: 100%"></div>
+<div hidden id="buttons" style="position: absolute; z-index: 2; right: 0; padding: 4px">
+    <button class="mdl-button mdl-js-button mdl-button--primary" onclick="hide(this)">Скрыть</button>
+    <button id="logout" class="mdl-button mdl-js-button mdl-button--primary"
+            onclick="listener(); firebase.auth().signOut()">Выйти</button>
+</div>
+<div id="card-container"
+     style="padding-left: 4px; overflow-y: auto; display: inline-block; height: 99%; font-family: Roboto,serif"></div>
+<script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-analytics-compat.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/ui/6.1.2/firebase-ui-auth__ru.js"></script>
+
+<script src="https://maps.api.2gis.ru/2.0/loader.js?pkg=full"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAocGQHaYqMzdwi4X7lGuoM8VbxxtSykj8",
+    projectId: "runner3-aa41d",
+    appId: "1:493867678531:web:13b549bfdbcf4f222dcdf6",
+    measurementId: "G-WJBNQRXVYQ"
+  }
+
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig)
+  }
+  firebase.analytics()
+
+  const container = document.getElementById('card-container')
+  const map_el = document.getElementById('map')
+  const buttons = document.getElementById('buttons')
+  const auth_el = document.getElementById('firebaseui-auth-container')
+  const logout = document.getElementById('logout')
+  let map, listener, polyline, startMarker, finishMarker
+
+  function hide(el) {
+    if (container.style.display !== 'none') {
+      container.style.display = 'none'
+      el.innerText = 'Скрыть'
+    } else {
+      container.style.display = 'inline-block'
+      el.innerText = 'Показать'
+    }
+  }
+
+  function initMap() {
+    return DG.then(() => {
+      if (map) {
+        return
+      }
+
+      map = DG.map('map', {
+        center: [54.632695, 39.732361],
+        zoom: 12,
+        fullscreenControl: false,
+        zoomControl: false,
+        geoclicker: true,
+      })
+      DG.control.scale({position: 'bottomright'}).addTo(map)
+      DG.control.zoom({position: 'bottomright'}).addTo(map)
+      DG.control.traffic({position: 'bottomright'}).addTo(map)
+      DG.control.location({position: 'bottomright'}).addTo(map)
+    })
+  }
+
+  async function shareRun(owner_uid, run_id) {
+    const url = new URL(location.href)
+    url.searchParams.set('run', `${owner_uid}!${run_id}`)
+
+    try {
+      await navigator.clipboard.writeText(url.toString())
+      alert('Ссылка скопирована в буфер обмена')
+    } catch {
+      alert('Не удалось скопировать ссылку')
+    }
+  }
+
+  function createCard(db, run, run_id, owner_uid, readOnly = false) {
+    const startTime = run.startTime.toDate()
+    const finishTime = run.finishTime.toDate()
+    const diffTime = ~~((finishTime - startTime) / 1000)
+
+    const card = document.createElement('div')
+    card.className = 'mdl-card mdl-shadow--2dp'
+    card.style.cssText = 'margin: 4px 0; width: auto'
+
+    const title = document.createElement('div')
+    title.className = 'mdl-card__title'
+    title.style.cssText = 'display: flex; align-items: center; justify-content: space-between; gap: 8px'
+
+    const title_text = document.createElement('h2')
+    title_text.className = 'mdl-card__title-text'
+
+    if (!readOnly) {
+      title_text.contentEditable = "true"
+      title_text.onblur = event => {
+        db.doc(run_id).update({
+          name: event.target.innerText.replace(/(^\s+|\s+$)/g, '')
+        })
+      }
+    }
+    title_text.innerText = run.name
+
+    const share_button = document.createElement('button')
+    share_button.className = 'mdl-button mdl-js-button mdl-button--icon'
+    share_button.title = 'Поделиться'
+    share_button.innerHTML = '<i class="material-icons">share</i>'
+    share_button.onclick = () => shareRun(owner_uid, run_id)
+
+    const description = document.createElement('div')
+    description.className = 'mdl-card__supporting-text'
+    description.style.cssText = 'width: 100%'
+    description.innerHTML = `${startTime.toLocaleString()} - ${finishTime.toLocaleString()}<br>`
+
+    const hours = ~~(diffTime / 3600)
+    const minutes = ~~(diffTime / 60) % 60
+    const seconds = diffTime % 60
+    let diffText = ''
+    if (hours > 0) {
+      diffText += `${hours} ч `
+    }
+    if (minutes > 0) {
+      diffText += `${minutes} мин `
+    }
+    if (seconds > 0 || diffText === '') {
+      diffText += `${seconds} с`
+    }
+
+    description.innerHTML += `Продолжительность: ${diffText}<br>`
+    description.innerHTML += `Дистанция: ${+(Math.round(run.distance * 100) / 100)} м<br>`
+    description.innerHTML += `Средняя скорость: ${+(Math.round(run.distance / diffTime * 36) / 10)} км / ч`
+
+    title.appendChild(title_text)
+    title.appendChild(share_button)
+    card.append(title, description)
+
+    const actions = document.createElement('div')
+    actions.className = 'mdl-card__actions'
+
+    const button = document.createElement('button')
+    button.className = 'mdl-button mdl-js-button mdl-button--primary'
+    button.onclick = () => {
+      showRoute(run.route)
+    }
+    button.innerText = 'Открыть'
+
+    actions.append(button)
+
+    if (!readOnly) {
+      const remove_button = document.createElement('button')
+      remove_button.className = 'mdl-button mdl-js-button mdl-button--primary'
+      remove_button.onclick = () => {
+        if (confirm(`Удалить "${run.name}"?`)) {
+          db.doc(run_id).delete()
+        }
+      }
+      remove_button.innerText = 'Удалить'
+      actions.append(remove_button)
+    }
+
+    card.append(actions)
+
+    return card
+  }
+
+  function showRoute(run_route) {
+    if (run_route.length === 0) {
+      return alert('Нет точек маршрута')
+    }
+
+    const route = run_route.map(geo => [geo.latitude, geo.longitude])
+
+    if (startMarker) {
+      startMarker.removeFrom(map)
+    }
+
+    if (finishMarker) {
+      finishMarker.removeFrom(map)
+    }
+
+    if (polyline) {
+      polyline.removeFrom(map)
+    }
+
+    polyline = DG.polyline(route, {color: 'blue'}).addTo(map)
+    startMarker = DG.marker(route[0]).addTo(map).bindPopup('Старт')
+    finishMarker = DG.marker(route[route.length - 1]).addTo(map).bindPopup('Финиш')
+
+    map.fitBounds(polyline.getBounds())
+  }
+
+  let params = new URL(window.location.href).searchParams.get('run')
+
+  if (params) {
+    document.title = "Просмотр забега"
+    buttons.hidden = false
+    auth_el.hidden = true
+    logout.style.display = 'none'
+
+    params = params.split('!')
+
+    initMap().then(async () => {
+      let doc = await firebase.firestore().collection('users').doc(params[0]).collection('runs').doc(params[1]).get()
+
+      if (!doc.exists) {
+        return alert('Забег не найден')
+      }
+
+      const run = doc.data()
+
+      container.style.visibility = 'visible'
+      container.innerHTML = ''
+      container.appendChild(createCard(null, run, params[1], params[0], true))
+      showRoute(run.route)
+    })
+  } else {
+    const ui = new firebaseui.auth.AuthUI(firebase.auth())
+
+    firebase.auth().onAuthStateChanged(user => {
+      if (typeof listener === 'function') {
+        listener();
+        listener = null
+      }
+
+      if (user) {
+        const uid = firebase.auth().currentUser.uid
+        const db = firebase.firestore().collection('users').doc(uid).collection('runs')
+        document.title = "Список забегов"
+        container.style.display = 'inline-block'
+        buttons.hidden = false
+        auth_el.hidden = true
+
+        initMap()
+
+        listener = db.orderBy('startTime', 'desc')
+          .onSnapshot(snapshot => {
+            container.innerHTML = ''
+            snapshot.forEach(doc => {
+              const run = doc.data()
+              const card = createCard(db, run, doc.id, uid, false)
+              container.appendChild(card)
+            })
+          })
+      } else {
+        document.title = "Вход"
+        container.style.display = 'none'
+        buttons.hidden = true
+        auth_el.hidden = false
+        map_el.className = ''
+        if (map) {
+          map.remove()
+          map = null
+        }
+
+        ui.start('#firebaseui-auth-container', {
+          signInOptions: [{
+            provider: firebase.auth.EmailAuthProvider.PROVIDER_ID,
+            requireDisplayName: false
+          }]
+        })
+      }
+    })
+  }
+</script>
+</body>
+</html>
