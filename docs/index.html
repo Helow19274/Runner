@@ -19,6 +19,7 @@
 <div id="card-container"
      style="padding-left: 4px; overflow-y: auto; display: inline-block; height: 99%; font-family: Roboto,serif"></div>
 <script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-app-check-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.7.0/firebase-analytics-compat.js"></script>
@@ -37,6 +38,7 @@
   if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig)
   }
+  firebase.appCheck().activate("6LeGpjgsAAAAAJn_0m5mTfG6yCFnTvWnQF9cMvin", true)
   firebase.analytics()
 
   const container = document.getElementById('card-container')

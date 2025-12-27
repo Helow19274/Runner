@@ -25,6 +25,8 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.Firebase
 import com.google.firebase.analytics.analytics
+import com.google.firebase.appcheck.appCheck
+import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.auth.auth
 import com.helow.runner4.auth.AuthActivity
 import com.helow.runner4.databinding.ActivityMainBinding
@@ -66,6 +68,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        Firebase.appCheck.installAppCheckProviderFactory(
+            PlayIntegrityAppCheckProviderFactory.getInstance(),
+        )
 
         if (Firebase.auth.currentUser == null) {
             startActivity(Intent(this, AuthActivity::class.java))
