@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Runner</title>
+    <link rel="icon" type="image/x-icon" href="favicon.png">
 
     <link rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.1.2/firebase-ui-auth.css"/>
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
@@ -29,16 +30,16 @@
 <script src="https://maps.api.2gis.ru/2.0/loader.js?pkg=full"></script>
 <script>
   const firebaseConfig = {
-    apiKey: "AIzaSyAocGQHaYqMzdwi4X7lGuoM8VbxxtSykj8",
-    projectId: "runner3-aa41d",
-    appId: "1:493867678531:web:13b549bfdbcf4f222dcdf6",
-    measurementId: "G-WJBNQRXVYQ"
+    apiKey: 'AIzaSyAocGQHaYqMzdwi4X7lGuoM8VbxxtSykj8',
+    projectId: 'runner3-aa41d',
+    appId: '1:493867678531:web:13b549bfdbcf4f222dcdf6',
+    measurementId: 'G-WJBNQRXVYQ'
   }
 
   if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig)
   }
-  firebase.appCheck().activate("6LeGpjgsAAAAAJn_0m5mTfG6yCFnTvWnQF9cMvin", true)
+  firebase.appCheck().activate('6LeGpjgsAAAAAJn_0m5mTfG6yCFnTvWnQF9cMvin', true)
   firebase.analytics()
 
   const container = document.getElementById('card-container')
@@ -107,7 +108,7 @@
     title_text.className = 'mdl-card__title-text'
 
     if (!readOnly) {
-      title_text.contentEditable = "true"
+      title_text.contentEditable = 'true'
       title_text.onblur = event => {
         db.doc(run_id).update({
           name: event.target.innerText.replace(/(^\s+|\s+$)/g, '')
@@ -207,7 +208,7 @@
   let params = new URL(window.location.href).searchParams.get('run')
 
   if (params) {
-    document.title = "Просмотр забега"
+    document.title = 'Просмотр забега'
     buttons.hidden = false
     auth_el.hidden = true
     logout.style.display = 'none'
@@ -240,7 +241,7 @@
       if (user) {
         const uid = firebase.auth().currentUser.uid
         const db = firebase.firestore().collection('users').doc(uid).collection('runs')
-        document.title = "Список забегов"
+        document.title = 'Список забегов'
         container.style.display = 'inline-block'
         buttons.hidden = false
         auth_el.hidden = true
@@ -257,7 +258,7 @@
             })
           })
       } else {
-        document.title = "Вход"
+        document.title = 'Вход'
         container.style.display = 'none'
         buttons.hidden = true
         auth_el.hidden = false
